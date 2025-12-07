@@ -148,7 +148,7 @@ Return a valid JSON object with these exact keys:
 - **readme**: Professional, emojis, structure.
 - **api**: Strict tables, signatures, cURL examples as per standard API docs.
 - **examples**: Practical code snippets.
-- **architecture**: Mermaid.js diagrams (flowcharts/sequence) explaining the system. Use \`\`\`mermaid blocks.
+- **architecture**: Mermaid.js diagrams. **CRITICAL**: Enclose ALL node labels in double quotes (e.g., \`A["Label with (text)"]\`). Do not use unquoted special characters.
 - **update**: Brief summary of what is documented.
 
 **IMPORTANT**: Return ONLY raw JSON. Do not wrap in markdown code blocks.`,
@@ -162,6 +162,7 @@ Your task is to analyze the source code and generate an **Architecture & Interna
 3.  **Visualizations**: Provide **Mermaid.js** diagrams (\`\`\`mermaid\`) for:
     - System Context (Flowchart)
     - Key processes (Sequence Diagram)
+    - **RULE**: Use double quotes for ALL node labels (e.g., \`A["Label"]\`).
 4.  **Directory Structure**: Annotated explanation of key files.
 5.  **Tech Decisions**: Why specific libraries/patterns were likely chosen.
 
