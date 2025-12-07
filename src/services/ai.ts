@@ -188,3 +188,17 @@ async function generateGemini(apiKey: string, modelId: string, system: string, u
     const data = await response.json();
     return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
+
+export const listGeminiModels = async (apiKey: string): Promise<string[]> => {
+    try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        if (!response.ok) return [];
+        const data = await response.json();
+        return data.models
+            ?.filter((m: any) => m.supportedGenerationMethods?.includes('generateContent'))
+            .map((m: any) => m.name.replace('models/', '')) || [];
+    } catch (e) {
+        console.error('Failed to list models', e);
+        return [];
+    }
+};

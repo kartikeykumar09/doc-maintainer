@@ -26,7 +26,8 @@ import {
   getSelectedModel, 
   saveSelectedModel, 
   defaultModels,
-  availableModels
+  availableModels,
+  listGeminiModels
 } from './services/ai';
 import type { AIModel, AIProvider } from './services/ai';
 import { 
@@ -183,6 +184,23 @@ function App() {
       setDocContent(result);
 
     } catch (err: any) {
+      console.error(err);
+      if (provider === 'gemini' && (err.message.includes('404') || err.message.includes('not found'))) {
+          const key = getApiKey('gemini');
+          if (key) {
+              listGeminiModels(key).then(models => {
+                  if (models.length > 0) {
+                      setError(`Model '${selectedModel.id}' unavailable. Try these: ${models.slice(0, 5).join(', ')}`);
+                  } else {
+                      setError(err.message || 'Generation failed');
+                  }
+              }).catch(() => setError(err.message || 'Generation failed'));
+              // Don't set error immediately, wait for promise? 
+              // Actually we should set a fallback error if promise fails fast, but setIsGenerating is in finally.
+              // To handle async properly inside sync catch, we'll just let the promise update the state.
+              return;
+          }
+      }
       setError(err.message || 'Generation failed');
     } finally {
       setIsGenerating(false);
