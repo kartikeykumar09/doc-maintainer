@@ -17,7 +17,10 @@ import {
   AlertCircle,
   Copy,
   Check,
-  ChevronDown
+  Copy,
+  Check,
+  ChevronDown,
+  Download
 } from 'lucide-react';
 import { 
   generateDocs, 
@@ -52,7 +55,7 @@ function App() {
   // Generation
   const [docContent, setDocContent] = useState<Record<string, string> | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [activeTab, setActiveTab] = useState<'readme' | 'api' | 'examples' | 'update'>('readme');
+  const [activeTab, setActiveTab] = useState<'readme' | 'api' | 'examples' | 'architecture' | 'update'>('readme');
   
   // UI & Settings
   const [showSettings, setShowSettings] = useState(false);
@@ -226,7 +229,7 @@ function App() {
 
       if (typeof result === 'string') {
           // Fallback
-          setDocContent({ readme: result, api: result, examples: result, update: result });
+          setDocContent({ readme: result, api: result, examples: result, architecture: result, update: result });
       } else {
           setDocContent(result);
       }
@@ -355,6 +358,12 @@ function App() {
               >
                 Update Docs
               </button>
+              <button 
+                className={`tab-btn ${activeTab === 'architecture' ? 'active' : ''}`}
+                onClick={() => setActiveTab('architecture')}
+              >
+                Architecture
+              </button>
             </div>
             
             <div className="panel-actions">
@@ -422,14 +431,28 @@ function App() {
                 Generate
               </button>
               {docContent && (
-                <button className="btn btn-secondary btn-icon" onClick={() => {
-                   const content = docContent[activeTab] || '';
-                   navigator.clipboard.writeText(content);
-                   setCopied(true);
-                   setTimeout(() => setCopied(false), 2000);
-                }}>
-                  {copied ? <CheckCircle2 size={16} color="var(--success)" /> : <Copy size={16} />}
-                </button>
+                <>
+                  <button className="btn btn-secondary btn-icon" onClick={() => {
+                     const content = docContent[activeTab] || '';
+                     const blob = new Blob([content], { type: 'text/markdown' });
+                     const url = URL.createObjectURL(blob);
+                     const a = document.createElement('a');
+                     a.href = url;
+                     a.download = `${activeTab === 'readme' ? 'README' : activeTab}.md`;
+                     a.click();
+                     URL.revokeObjectURL(url);
+                  }} title="Download MD">
+                    <Download size={16} />
+                  </button>
+                  <button className="btn btn-secondary btn-icon" onClick={() => {
+                     const content = docContent[activeTab] || '';
+                     navigator.clipboard.writeText(content);
+                     setCopied(true);
+                     setTimeout(() => setCopied(false), 2000);
+                  }} title="Copy to Clipboard">
+                    {copied ? <CheckCircle2 size={16} color="var(--success)" /> : <Copy size={16} />}
+                  </button>
+                </>
               )}
             </div>
           </div>

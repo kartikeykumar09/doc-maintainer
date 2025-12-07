@@ -56,7 +56,7 @@ export const saveSelectedModel = (model: AIModel): void => {
 // Generation Service
 interface GenerateOptions {
     code: string;
-    type: 'readme' | 'api' | 'examples' | 'update' | 'all';
+    type: 'readme' | 'api' | 'examples' | 'architecture' | 'update' | 'all';
     existingDocs?: string; // For update mode
     additionalContext?: string;
 }
@@ -141,15 +141,31 @@ Return a valid JSON object with these exact keys:
 - "readme": Project Overview (Markdown)
 - "api": Detailed Strict API Reference (Markdown)
 - "examples": Usage Examples (Markdown)
+- "architecture": Architecture & Logic Flow (Mermaid + Markdown)
 - "update": Update Notes (Markdown)
 
 **Instructions**:
 - **readme**: Professional, emojis, structure.
 - **api**: Strict tables, signatures, cURL examples as per standard API docs.
 - **examples**: Practical code snippets.
+- **architecture**: Mermaid.js diagrams (flowcharts/sequence) explaining the system. Use \`\`\`mermaid blocks.
 - **update**: Brief summary of what is documented.
 
-**IMPORTANT**: Return ONLY raw JSON. Do not wrap in markdown code blocks.`
+**IMPORTANT**: Return ONLY raw JSON. Do not wrap in markdown code blocks.`,
+
+    architecture: `You are a system architect.
+Your task is to analyze the source code and generate an **Architecture & Internals Guide**.
+
+**Required Content**:
+1.  **High-Level Design**: Explain how the components interact.
+2.  **Data Flow**: How data moves from input to output.
+3.  **Visualizations**: Provide **Mermaid.js** diagrams (\`\`\`mermaid\`) for:
+    - System Context (Flowchart)
+    - Key processes (Sequence Diagram)
+4.  **Directory Structure**: Annotated explanation of key files.
+5.  **Tech Decisions**: Why specific libraries/patterns were likely chosen.
+
+**Tone**: Technical and structural.`
 };
 
 export const generateDocs = async (options: GenerateOptions): Promise<string | any> => {
