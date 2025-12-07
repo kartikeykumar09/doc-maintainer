@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import mermaid from 'mermaid';
 import ReactMarkdown from 'react-markdown';
 // @ts-ignore
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -40,6 +41,29 @@ import {
 } from './services/github';
 import type { FileNode } from './services/github';
 import './index.css';
+
+mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
+
+const MermaidDiagram = ({ chart }: { chart: string }) => {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (ref.current && chart) {
+      mermaid.contentLoaded(); 
+      // Very basic rendering attempt. Using renderAsync is safer.
+       mermaid.render(`mermaid-${Math.random().toString(36).substr(2, 9)}`, chart)
+        .then(({ svg }) => {
+          if (ref.current) ref.current.innerHTML = svg;
+        })
+        .catch((err) => {
+           console.warn('Mermaid error:', err);
+           if(ref.current) ref.current.innerHTML = `<pre class="error" style="color:red; font-size: 0.8rem;">${err.message}</pre>`;
+        });
+    }
+  }, [chart]);
+
+  return <div ref={ref} className="mermaid-chart" style={{margin: '1rem 0', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '0.5rem'}} />;
+};
 
 function App() {
   // --- State ---
@@ -461,6 +485,9 @@ function App() {
                components={{
                  code({node, inline, className, children, ...props}: any) {
                    const match = /language-(\w+)/.exec(className || '');
+                   if (!inline && match && match[1] === 'mermaid') {
+                     return <MermaidDiagram chart={String(children)} />;
+                   }
                    return !inline && match ? (
                      <SyntaxHighlighter
                        style={vscDarkPlus}
