@@ -1,73 +1,84 @@
-# React + TypeScript + Vite
+# 📘 AI Documentation Auto-Maintainer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> Auto-generate and maintain documentation directly from your GitHub repositories.
 
-Currently, two official plugins are available:
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://kartikeykumar.com/tools/doc-maintainer/)
+[![React](https://img.shields.io/badge/React-18-blue)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://typescriptlang.org)
+[![Vite](https://img.shields.io/badge/Vite-5-purple)](https://vitejs.dev)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+![AI Doc Maintainer Screenshot](assets/screenshot.png)
 
-## React Compiler
+## ✨ Features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **GitHub Integration**: Connect any public repository (or private with token).
+- **Auto-Scanner**: Fetches file structure and identifies key project files.
+- **Smart Generation**: Uses AI (Gemini/GPT-4) to read code and write docs.
+- **Multiple Modes**:
+  - 📝 **README Generator**: High-level overview, installation, usage.
+  - 🔌 **API Reference**: Detailed class/function documentation.
+  - 🔄 **Doc Updater**: (Coming Soon) Update existing docs based on code changes.
+- **Privacy First**: API keys and tokens are stored in your browser's local storage.
 
-## Expanding the ESLint configuration
+## 🚀 Quick Start
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
+- Node.js 18+
+- npm or yarn
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Installation
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+```bash
+# Clone the repository
+git clone https://github.com/kartikeykumar09/doc-maintainer.git
+cd doc-maintainer
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### Usage
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+1. **Enter Repo URL**: Paste a GitHub repository URL (e.g., `facebook/react`).
+2. **Select Files**: Choose the files you want the AI to analyze (e.g., `package.json`, `src/index.js`).
+3. **Configure AI**: Click Settings to add your Gemini or OpenAI API Key.
+4. **Generate**: Click "Generate" and watch your documentation appear!
+
+## 🛠️ Tech Stack
+
+| Component | Technology |
+|-----------|------------|
+| Framework | React 18 + TypeScript |
+| Build Tool | Vite 5 |
+| Styling | Vanilla CSS (Indigo/Neon theme) |
+| Icons | Lucide React |
+| AI | Gemini 1.5 Pro / GPT-4o |
+| Syntax Highlighting | React Syntax Highlighter |
+
+## 🤝 Contributing
+
+Contributions are welcome! This tool is in Beta.
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m "Add amazing feature"`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+## 📄 License
+
+MIT License - build something awesome!
+
+## 🙏 Acknowledgments
+
+- Built by [Kartikey Kumar](https://kartikeykumar.com)
+- Part of the [Free Developer Tools](https://kartikeykumar.com/tools) suite
+
+---
+
+**[🔗 Live Demo](https://kartikeykumar.com/tools/doc-maintainer/)** | **[🐛 Report Bug](https://github.com/kartikeykumar09/doc-maintainer/issues)**
