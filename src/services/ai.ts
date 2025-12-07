@@ -189,16 +189,60 @@ async function generateGemini(apiKey: string, modelId: string, system: string, u
     return data.candidates?.[0]?.content?.parts?.[0]?.text || '';
 }
 
-export const listGeminiModels = async (apiKey: string): Promise<string[]> => {
+
+
+// Fetch available models from OpenAI
+export const fetchOpenAIModels = async (apiKey: string): Promise<AIModel[]> => {
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-        if (!response.ok) return [];
+        const response = await fetch('https://api.openai.com/v1/models', {
+            headers: { 'Authorization': `Bearer ${apiKey}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch OpenAI models');
+
         const data = await response.json();
-        return data.models
-            ?.filter((m: any) => m.supportedGenerationMethods?.includes('generateContent'))
-            .map((m: any) => m.name.replace('models/', '')) || [];
+        const chatModels = data.data
+            .filter((m: { id: string }) =>
+                m.id.includes('gpt-4') || m.id.includes('gpt-3.5')
+            )
+            .map((m: { id: string }) => ({
+                id: m.id,
+                name: m.id,
+                provider: 'openai' as AIProvider
+            }))
+            .sort((a: AIModel, b: AIModel) => a.id.localeCompare(b.id));
+
+        return chatModels.length > 0 ? chatModels : [];
     } catch (e) {
-        console.error('Failed to list models', e);
+        console.warn('Failed to fetch OpenAI models', e);
+        return [];
+    }
+};
+
+// Fetch available models from Gemini
+export const fetchGeminiModels = async (apiKey: string): Promise<AIModel[]> => {
+    try {
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`
+        );
+
+        if (!response.ok) throw new Error('Failed to fetch Gemini models');
+
+        const data = await response.json();
+        const models = data.models
+            ?.filter((m: { name: string; supportedGenerationMethods?: string[] }) =>
+                m.supportedGenerationMethods?.includes('generateContent') &&
+                (m.name.includes('gemini'))
+            )
+            .map((m: { name: string; displayName: string }) => ({
+                id: m.name.replace('models/', ''),
+                name: m.displayName || m.name.replace('models/', ''),
+                provider: 'gemini' as AIProvider
+            }));
+
+        return models || [];
+    } catch (e) {
+        console.warn('Failed to fetch Gemini models', e);
         return [];
     }
 };

@@ -26,8 +26,9 @@ import {
   getSelectedModel, 
   saveSelectedModel, 
   defaultModels,
-  availableModels,
-  listGeminiModels
+  availableModels as staticModels,
+  fetchGeminiModels,
+  fetchOpenAIModels
 } from './services/ai';
 import type { AIModel, AIProvider } from './services/ai';
 import { 
@@ -60,6 +61,8 @@ function App() {
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   
   // API Config
+  const [availableModels, setAvailableModels] = useState<AIModel[]>(staticModels);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
   const [apiKey, setApiKeyState] = useState('');
   const [githubToken, setGithubToken] = useState('');
   const [provider, setProvider] = useState<AIProvider>('gemini');
@@ -74,6 +77,36 @@ function App() {
     setGithubToken(localStorage.getItem('doc_maintainer_github_token') || '');
   }, []);
 
+  useEffect(() => {
+    const fetchModels = async () => {
+        const key = getApiKey(provider) || apiKey;
+        if (!key) return;
+        
+        setIsLoadingModels(true);
+        try {
+            let fetched: AIModel[] = [];
+            if (provider === 'gemini') {
+                fetched = await fetchGeminiModels(key);
+            } else {
+                fetched = await fetchOpenAIModels(key);
+            }
+            
+            if (fetched.length > 0) {
+                 setAvailableModels(prev => {
+                     const others = prev.filter(p => p.provider !== provider);
+                     return [...others, ...fetched];
+                 });
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsLoadingModels(false);
+        }
+    };
+    
+    fetchModels();
+  }, [provider, apiKey]);
+
   // --- Handlers ---
 
   const handleSaveSettings = () => {
@@ -83,6 +116,7 @@ function App() {
     setShowSettings(false);
     setError(null);
   };
+
 
   const handleLoadRepo = async () => {
     if (!repoUrl) return;
@@ -185,22 +219,6 @@ function App() {
 
     } catch (err: any) {
       console.error(err);
-      if (provider === 'gemini' && (err.message.includes('404') || err.message.includes('not found'))) {
-          const key = getApiKey('gemini');
-          if (key) {
-              listGeminiModels(key).then(models => {
-                  if (models.length > 0) {
-                      setError(`Model '${selectedModel.id}' unavailable. Try these: ${models.slice(0, 5).join(', ')}`);
-                  } else {
-                      setError(err.message || 'Generation failed');
-                  }
-              }).catch(() => setError(err.message || 'Generation failed'));
-              // Don't set error immediately, wait for promise? 
-              // Actually we should set a fallback error if promise fails fast, but setIsGenerating is in finally.
-              // To handle async properly inside sync catch, we'll just let the promise update the state.
-              return;
-          }
-      }
       setError(err.message || 'Generation failed');
     } finally {
       setIsGenerating(false);
@@ -315,7 +333,7 @@ function App() {
                    <span style={{maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
                       {selectedModel.name.replace(/ \((Latest|Stable|001)\)/g, '')}
                    </span>
-                   <ChevronDown size={14} />
+                   {isLoadingModels ? <RefreshCw size={14} className="spin" /> : <ChevronDown size={14} />}
                 </button>
                 {showModelDropdown && (
                    <div className="model-dropdown-menu" style={{
