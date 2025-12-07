@@ -16,7 +16,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Copy,
-  Check
+  Check,
+  ChevronDown
 } from 'lucide-react';
 import { 
   generateDocs, 
@@ -55,6 +56,7 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showModelDropdown, setShowModelDropdown] = useState(false);
   
   // API Config
   const [apiKey, setApiKeyState] = useState('');
@@ -286,6 +288,61 @@ function App() {
             </div>
             
             <div className="panel-actions">
+              <div style={{position: 'relative', marginRight: '0.5rem'}}>
+                <button 
+                  className="btn btn-secondary btn-sm"
+                  style={{gap: '0.5rem', minWidth: '160px', justifyContent: 'space-between'}}
+                  onClick={() => setShowModelDropdown(!showModelDropdown)}
+                >
+                   <span style={{maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+                      {selectedModel.name.replace(' (Latest)', '').replace(' (Stable)', '')}
+                   </span>
+                   <ChevronDown size={14} />
+                </button>
+                {showModelDropdown && (
+                   <div className="model-dropdown-menu" style={{
+                      position: 'absolute', top: '100%', right: 0, marginTop: '0.5rem',
+                      background: 'var(--surface)', border: '1px solid var(--border)',
+                      borderRadius: '0.5rem', overflow: 'hidden', zIndex: 20,
+                      minWidth: '220px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                   }}>
+                      <div style={{padding: '0.5rem', fontSize: '0.75rem', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)', background: 'rgba(0,0,0,0.2)'}}>
+                        Using {provider.charAt(0).toUpperCase() + provider.slice(1)}
+                      </div>
+                      {availableModels.filter(m => m.provider === provider).map(m => (
+                         <button 
+                           key={m.id} 
+                           onClick={() => { setSelectedModel(m); setShowModelDropdown(false); }}
+                           style={{
+                             display: 'block', width: '100%', padding: '0.5rem 1rem',
+                             textAlign: 'left', background: 'none', border: 'none',
+                             color: 'var(--text)', cursor: 'pointer',
+                             backgroundColor: selectedModel.id === m.id ? 'rgba(99, 102, 241, 0.1)' : 'transparent',
+                             fontSize: '0.85rem'
+                           }}
+                           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--surface-hover)'}
+                           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = selectedModel.id === m.id ? 'rgba(99, 102, 241, 0.1)' : 'transparent'}
+                         >
+                            {m.name}
+                         </button>
+                      ))}
+                      <div style={{height: 1, background: 'var(--border)', margin: '0'}} />
+                      <button 
+                        onClick={() => { setShowSettings(true); setShowModelDropdown(false); }}
+                         style={{
+                             display: 'flex', alignItems: 'center', gap: '0.5rem',
+                             width: '100%', padding: '0.75rem 1rem',
+                             textAlign: 'left', background: 'rgba(0,0,0,0.1)', border: 'none',
+                             color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.85rem'
+                           }}
+                           onMouseEnter={(e) => e.currentTarget.style.color = 'var(--primary)'}
+                           onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                      >
+                         <Settings size={12} /> Configure Provider...
+                      </button>
+                   </div>
+                )}
+              </div>
               <button 
                 className="btn btn-primary btn-sm"
                 onClick={handleGenerate}
