@@ -33,36 +33,48 @@ export const parseRepoUrl = (url: string) => {
     return null;
 };
 
+const handleResponse = async (response: Response, context: string) => {
+    if (response.status === 403) {
+        throw new Error(`GitHub Rate Limit Exceeded. Please add a Personal Access Token in Settings to continue.`);
+    }
+    if (response.status === 404) {
+        throw new Error(`${context} not found. Check the URL or ensure you have access (Token required for private repos).`);
+    }
+    if (!response.ok) {
+        throw new Error(`GitHub API Error (${response.status}): ${response.statusText}`);
+    }
+    return response;
+};
+
 export const getRepoDetails = async (owner: string, repo: string, token?: string): Promise<RepoDetails> => {
-    const headers: HeadersInit = {
-        'Accept': 'application/vnd.github.v3+json',
-    };
+    const headers: HeadersInit = { 'Accept': 'application/vnd.github.v3+json' };
     if (token) headers['Authorization'] = `token ${token}`;
 
     const response = await fetch(`${BASE_URL}/repos/${owner}/${repo}`, { headers });
-    if (!response.ok) throw new Error('Failed to fetch repo details');
+    await handleResponse(response, 'Repository');
     return response.json();
 };
 
 export const getRepoTree = async (owner: string, repo: string, branch: string = 'main', token?: string): Promise<FileNode[]> => {
-    const headers: HeadersInit = {
-        'Accept': 'application/vnd.github.v3+json',
-    };
+    const headers: HeadersInit = { 'Accept': 'application/vnd.github.v3+json' };
     if (token) headers['Authorization'] = `token ${token}`;
 
-    // Recursive tree fetch
+    // Try fetching default branch first if 'main' fails? 
+    // Ideally we should use the default_branch from repo details, which we do in App.tsx.
+
     const response = await fetch(`${BASE_URL}/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`, { headers });
-    if (!response.ok) throw new Error('Failed to fetch file tree');
+    await handleResponse(response, 'File Tree');
+
     const data = await response.json();
 
-    // Filter out non-code files (images, locks, etc) to reduce noise in this MVP
-    const ignoredExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.pdf', '.lock', '.tsbuildinfo'];
-    const ignoredDirs = ['node_modules', 'dist', 'build', '.git', '.vscode', '.idea'];
+    // Filter out non-code files (images, locks, etc)
+    const ignoredExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.pdf', '.lock', '.tsbuildinfo', '.map'];
+    const ignoredDirs = ['node_modules', 'dist', 'build', '.git', '.vscode', '.idea', 'coverage'];
 
     return data.tree.filter((node: FileNode) => {
-        if (node.type !== 'blob') return false; // Only files for now
+        if (node.type !== 'blob') return false;
         const filename = node.path.split('/').pop() || '';
-        if (filename.startsWith('.')) return false; // Ignore dotfiles
+        if (filename.startsWith('.') && filename !== '.env.example') return false;
         if (ignoredExtensions.some(ext => filename.toLowerCase().endsWith(ext))) return false;
         if (ignoredDirs.some(dir => node.path.includes(`${dir}/`))) return false;
         return true;
@@ -70,13 +82,10 @@ export const getRepoTree = async (owner: string, repo: string, branch: string = 
 };
 
 export const getFileContent = async (owner: string, repo: string, path: string, token?: string): Promise<string> => {
-    const headers: HeadersInit = {
-        'Accept': 'application/vnd.github.v3.raw', // Request raw content
-    };
+    const headers: HeadersInit = { 'Accept': 'application/vnd.github.v3.raw' };
     if (token) headers['Authorization'] = `token ${token}`;
 
     const response = await fetch(`${BASE_URL}/repos/${owner}/${repo}/contents/${path}`, { headers });
-
-    if (!response.ok) throw new Error(`Failed to fetch file: ${path}`);
+    await handleResponse(response, `File ${path}`);
     return response.text();
 };
