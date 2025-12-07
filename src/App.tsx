@@ -52,7 +52,7 @@ function App() {
   // Generation
   const [docContent, setDocContent] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [activeTab, setActiveTab] = useState<'readme' | 'api' | 'update'>('readme');
+  const [activeTab, setActiveTab] = useState<'readme' | 'api' | 'examples' | 'update'>('readme');
   
   // UI & Settings
   const [showSettings, setShowSettings] = useState(false);
@@ -320,6 +320,18 @@ function App() {
                 onClick={() => setActiveTab('api')}
               >
                 API Reference
+              </button>
+              <button 
+                className={`tab-btn ${activeTab === 'examples' ? 'active' : ''}`}
+                onClick={() => setActiveTab('examples')}
+              >
+                Examples
+              </button>
+              <button 
+                className={`tab-btn ${activeTab === 'update' ? 'active' : ''}`}
+                onClick={() => setActiveTab('update')}
+              >
+                Update Docs
               </button>
             </div>
             
