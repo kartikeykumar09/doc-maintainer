@@ -41,7 +41,7 @@ pre {
   max-width: 1400px;
   margin: 0 auto;
   padding: 2rem;
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
@@ -131,7 +131,6 @@ pre {
   grid-template-columns: 350px 1fr;
   gap: 1.5rem;
   flex: 1;
-  min-height: 0;
 }
 
 /* Panels */
@@ -141,7 +140,7 @@ pre {
   border-radius: 0.75rem;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .panel.disabled {
@@ -177,9 +176,13 @@ pre {
 }
 
 /* File Explorer */
+.file-explorer {
+  align-self: start;
+  position: sticky;
+  top: 2rem;
+}
+
 .file-list {
-  flex: 1;
-  overflow-y: auto;
   padding: 0.5rem;
 }
 
@@ -218,6 +221,12 @@ pre {
   color: white;
 }
 
+.checkbox.partial {
+  background: rgba(99, 102, 241, 0.3);
+  border-color: var(--primary);
+  color: white;
+}
+
 .file-path {
   flex: 1;
   font-family: 'JetBrains Mono', monospace;
@@ -230,6 +239,16 @@ pre {
 .file-size {
   font-size: 0.75rem;
   color: var(--text-muted);
+}
+
+.file-item.folder {
+  gap: 0.5rem;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.file-item.folder:hover {
+  color: var(--text);
 }
 
 .empty-state,
@@ -246,9 +265,7 @@ pre {
 
 /* Output Panel */
 .markdown-preview {
-  flex: 1;
   padding: 2rem;
-  overflow-y: auto;
   font-family: 'Inter', system-ui, sans-serif;
 }
 
@@ -493,16 +510,18 @@ pre {
 
 /* Footer */
 .footer {
-  margin-top: auto;
-  padding-top: 1rem;
   text-align: center;
-  font-size: 0.875rem;
+  padding: 2.5rem 1rem;
   color: var(--text-muted);
+  font-size: 0.85rem;
+  border-top: 1px solid var(--border);
+  margin-top: 4rem;
 }
 
 .footer a {
-  color: var(--text);
+  color: var(--primary);
   text-decoration: none;
+  font-weight: 500;
 }
 
 .footer a:hover {

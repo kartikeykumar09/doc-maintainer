@@ -139,17 +139,15 @@ Your task is to analyze the source code and generate FOUR documents in a single 
 **Output Format**:
 Return a valid JSON object with these exact keys:
 - "readme": Project Overview (Markdown)
-- "api": Detailed Strict API Reference (Markdown)
-- "examples": Usage Examples (Markdown)
-- "architecture": Architecture & Logic Flow (Mermaid + Markdown)
+- "architecture": System Architecture with Mermaid.js diagrams (flowcharts, sequence diagrams)
 - "update": Update Notes (Markdown)
 
 **Instructions**:
 - **readme**: Professional, emojis, structure.
-- **api**: Strict tables, signatures, cURL examples as per standard API docs.
+- **api**: Strict tables, signatures, cURL examples.
 - **examples**: Practical code snippets.
-- **architecture**: Mermaid.js diagrams. **CRITICAL**: Enclose ALL node labels in double quotes (e.g., \`A["Label with (text)"]\`). Do not use unquoted special characters.
-- **update**: Brief summary of what is documented.
+- **architecture**: Use Mermaid.js (\`\`\`mermaid) for flowcharts and sequence diagrams.
+- **update**: Brief summary of documentation.
 
 **IMPORTANT**: Return ONLY raw JSON. Do not wrap in markdown code blocks.`,
 
@@ -159,12 +157,19 @@ Your task is to analyze the source code and generate an **Architecture & Interna
 **Required Content**:
 1.  **High-Level Design**: Explain how the components interact.
 2.  **Data Flow**: How data moves from input to output.
-3.  **Visualizations**: Provide **Mermaid.js** diagrams (\`\`\`mermaid\`) for:
-    - System Context (Flowchart)
-    - Key processes (Sequence Diagram)
-    - **RULE**: Use double quotes for ALL node labels (e.g., \`A["Label"]\`).
+3.  **Mermaid Diagrams**: Use \`\`\`mermaid code blocks for flowcharts.
+    
+    **CRITICAL MERMAID SYNTAX RULES**:
+    - Use square brackets for nodes: \`A[Label]\` 
+    - NEVER use parentheses () inside labels - they break the parser!
+    - BAD: \`A[Decoder (LLM)]\` ❌
+    - GOOD: \`A[Decoder - LLM]\` ✓
+    - GOOD: \`A[Decoder/LLM]\` ✓
+    - For round nodes, use: \`A((Label))\` but NO parentheses in the label text itself
+    - Replace any \`(...)\` in descriptions with \`- ...\` or \`/ ...\` or just remove them
+    
 4.  **Directory Structure**: Annotated explanation of key files.
-5.  **Tech Decisions**: Why specific libraries/patterns were likely chosen.
+5.  **Tech Decisions**: Why specific libraries/patterns were chosen.
 
 **Tone**: Technical and structural.`
 };

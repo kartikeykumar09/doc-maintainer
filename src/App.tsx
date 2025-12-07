@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
-import mermaid from 'mermaid';
+import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 // @ts-ignore
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -19,6 +18,9 @@ import {
   Copy,
   Check,
   ChevronDown,
+  ChevronRight,
+  Folder,
+  File,
   Download
 } from 'lucide-react';
 import { 
@@ -42,27 +44,130 @@ import {
 import type { FileNode } from './services/github';
 import './index.css';
 
-mermaid.initialize({ startOnLoad: false, theme: 'dark', securityLevel: 'loose' });
-
+// Render Mermaid diagrams via mermaid.live iframe (most reliable method)
 const MermaidDiagram = ({ chart }: { chart: string }) => {
-  const ref = useRef<HTMLDivElement>(null);
+  const [copied, setCopied] = useState(false);
+  const [showCode, setShowCode] = useState(false);
+  
+  const handleCopy = () => {
+    navigator.clipboard.writeText(chart);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
-  useEffect(() => {
-    if (ref.current && chart) {
-      mermaid.contentLoaded(); 
-      // Very basic rendering attempt. Using renderAsync is safer.
-       mermaid.render(`mermaid-${Math.random().toString(36).substr(2, 9)}`, chart)
-        .then(({ svg }) => {
-          if (ref.current) ref.current.innerHTML = svg;
-        })
-        .catch((err) => {
-           console.warn('Mermaid error:', err);
-           if(ref.current) ref.current.innerHTML = `<pre class="error" style="color:red; font-size: 0.8rem;">${err.message}</pre>`;
-        });
+  // Encode diagram for mermaid.live URL using pako compression
+  // For view mode: https://mermaid.live/view#pako:...
+  const encodeDiagram = (code: string) => {
+    try {
+      // Simple base64 for the state object
+      const state = { code, mermaid: { theme: 'dark' }, autoSync: true, updateDiagram: true };
+      return btoa(JSON.stringify(state));
+    } catch {
+      return btoa(code);
     }
-  }, [chart]);
+  };
 
-  return <div ref={ref} className="mermaid-chart" style={{margin: '1rem 0', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '0.5rem'}} />;
+  const encodedState = encodeDiagram(chart);
+  const viewUrl = `https://mermaid.live/view#base64:${encodedState}`;
+
+  return (
+    <div style={{
+      margin: '1rem 0',
+      background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1))',
+      border: '1px solid rgba(99,102,241,0.3)',
+      borderRadius: '0.5rem',
+      overflow: 'hidden'
+    }}>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '0.5rem 1rem',
+        background: 'rgba(0,0,0,0.2)',
+        borderBottom: '1px solid rgba(99,102,241,0.2)'
+      }}>
+        <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600 }}>
+          📊 Mermaid Diagram
+        </span>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <button
+            onClick={() => setShowCode(!showCode)}
+            style={{
+              background: 'transparent',
+              color: 'var(--text-muted)',
+              border: '1px solid var(--border)',
+              padding: '0.25rem 0.5rem',
+              borderRadius: '0.25rem',
+              fontSize: '0.7rem',
+              cursor: 'pointer'
+            }}
+          >
+            {showCode ? 'Hide Code' : 'Show Code'}
+          </button>
+          <a
+            href={`https://mermaid.live/edit#base64:${encodedState}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              background: 'var(--surface)',
+              color: 'var(--text-muted)',
+              border: '1px solid var(--border)',
+              padding: '0.25rem 0.5rem',
+              borderRadius: '0.25rem',
+              fontSize: '0.7rem',
+              textDecoration: 'none'
+            }}
+          >
+            Edit ↗
+          </a>
+          <button
+            onClick={handleCopy}
+            style={{
+              background: copied ? 'var(--success)' : 'var(--primary)',
+              color: '#fff',
+              border: 'none',
+              padding: '0.25rem 0.5rem',
+              borderRadius: '0.25rem',
+              fontSize: '0.7rem',
+              cursor: 'pointer'
+            }}
+          >
+            {copied ? '✓ Copied' : 'Copy'}
+          </button>
+        </div>
+      </div>
+      
+      {showCode && (
+        <pre style={{
+          margin: 0,
+          padding: '1rem',
+          overflow: 'auto',
+          maxHeight: '200px',
+          fontSize: '0.7rem',
+          lineHeight: 1.4,
+          color: '#94a3b8',
+          background: 'rgba(0,0,0,0.3)',
+          borderBottom: '1px solid rgba(99,102,241,0.2)'
+        }}>
+          <code>{chart}</code>
+        </pre>
+      )}
+      
+      <div style={{ background: '#1e1e1e', minHeight: '250px' }}>
+        <iframe
+          src={viewUrl}
+          style={{
+            width: '100%',
+            height: '350px',
+            border: 'none',
+            background: '#1e1e1e'
+          }}
+          title="Mermaid Diagram"
+          sandbox="allow-scripts allow-same-origin"
+        />
+      </div>
+    </div>
+  );
 };
 
 function App() {
@@ -84,6 +189,7 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   
   // API Config
   const [availableModels, setAvailableModels] = useState<AIModel[]>(staticModels);
@@ -336,19 +442,134 @@ function App() {
               </div>
             )}
             
-            {fileTree.map(node => (
-              <div 
-                key={node.path} 
-                className={`file-item ${selectedPaths.has(node.path) ? 'selected' : ''}`}
-                onClick={() => toggleFileSelection(node.path)}
-              >
-                <div className={`checkbox ${selectedPaths.has(node.path) ? 'checked' : ''}`}>
-                  {selectedPaths.has(node.path) && <Check size={12} />}
-                </div>
-                <span className="file-path">{node.path}</span>
-                <span className="file-size">{(node.size ? (node.size/1024).toFixed(1) + 'kb' : '')}</span>
-              </div>
-            ))}
+            {(() => {
+              // Build folder tree structure
+              const buildTree = () => {
+                const tree: Record<string, { files: typeof fileTree; folders: Set<string> }> = { '': { files: [], folders: new Set() }};
+                
+                fileTree.forEach(node => {
+                  const parts = node.path.split('/');
+                  if (parts.length === 1) {
+                    // Root-level file
+                    tree[''].files.push(node);
+                  } else {
+                    // File in a folder
+                    const folder = parts.slice(0, -1).join('/');
+                    if (!tree[folder]) tree[folder] = { files: [], folders: new Set() };
+                    tree[folder].files.push(node);
+                    
+                    // Register parent folders
+                    let parentPath = '';
+                    for (let i = 0; i < parts.length - 1; i++) {
+                      const currentPath = parts.slice(0, i + 1).join('/');
+                      if (!tree[parentPath]) tree[parentPath] = { files: [], folders: new Set() };
+                      tree[parentPath].folders.add(currentPath);
+                      parentPath = currentPath;
+                      if (!tree[currentPath]) tree[currentPath] = { files: [], folders: new Set() };
+                    }
+                  }
+                });
+                return tree;
+              };
+              
+              const tree = buildTree();
+              const toggleFolder = (folder: string) => {
+                setExpandedFolders(prev => {
+                  const next = new Set(prev);
+                  if (next.has(folder)) next.delete(folder);
+                  else next.add(folder);
+                  return next;
+                });
+              };
+              
+              const renderFolder = (folderPath: string, depth: number = 0): JSX.Element[] => {
+                const data = tree[folderPath];
+                if (!data) return [];
+                
+                const items: JSX.Element[] = [];
+                
+                // Helper to get all files under a folder recursively
+                const getAllFilesInFolder = (folder: string): string[] => {
+                  const result: string[] = [];
+                  const folderData = tree[folder];
+                  if (folderData) {
+                    result.push(...folderData.files.map(f => f.path));
+                    folderData.folders.forEach(sub => {
+                      result.push(...getAllFilesInFolder(sub));
+                    });
+                  }
+                  return result;
+                };
+                
+                // Render subfolders first
+                Array.from(data.folders).sort().forEach(subFolder => {
+                  const folderName = subFolder.split('/').pop() || subFolder;
+                  const isExpanded = expandedFolders.has(subFolder);
+                  const folderFiles = getAllFilesInFolder(subFolder);
+                  const allSelected = folderFiles.length > 0 && folderFiles.every(f => selectedPaths.has(f));
+                  const someSelected = folderFiles.some(f => selectedPaths.has(f));
+                  
+                  const toggleFolderSelection = (e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    const next = new Set(selectedPaths);
+                    if (allSelected) {
+                      folderFiles.forEach(f => next.delete(f));
+                    } else {
+                      folderFiles.forEach(f => next.add(f));
+                    }
+                    setSelectedPaths(next);
+                  };
+                  
+                  items.push(
+                    <div 
+                      key={subFolder} 
+                      className="file-item folder"
+                      style={{ paddingLeft: `${depth * 16 + 12}px` }}
+                      onClick={() => toggleFolder(subFolder)}
+                    >
+                      <div 
+                        className={`checkbox ${allSelected ? 'checked' : someSelected ? 'partial' : ''}`}
+                        onClick={toggleFolderSelection}
+                      >
+                        {allSelected && <Check size={12} />}
+                        {someSelected && !allSelected && <span style={{fontSize: '10px'}}>–</span>}
+                      </div>
+                      {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                      <Folder size={14} style={{ color: 'var(--warning)' }} />
+                      <span className="file-path">{folderName}</span>
+                    </div>
+                  );
+                  
+                  if (isExpanded) {
+                    items.push(...renderFolder(subFolder, depth + 1));
+                  }
+                });
+                
+                // Render files
+                data.files.forEach(node => {
+                  const fileName = node.path.split('/').pop() || node.path;
+                  items.push(
+                    <div 
+                      key={node.path} 
+                      className={`file-item ${selectedPaths.has(node.path) ? 'selected' : ''}`}
+                      style={{ paddingLeft: `${depth * 16 + 12}px` }}
+                      onClick={() => toggleFileSelection(node.path)}
+                    >
+                      <div className={`checkbox ${selectedPaths.has(node.path) ? 'checked' : ''}`}>
+                        {selectedPaths.has(node.path) && <Check size={12} />}
+                      </div>
+                      <File size={14} style={{ color: 'var(--text-muted)' }} />
+                      <span className="file-path">{fileName}</span>
+                      <span className="file-size">{(node.size ? (node.size/1024).toFixed(1) + 'kb' : '')}</span>
+                    </div>
+                  );
+                });
+                
+                return items;
+              };
+              
+              return renderFolder('');
+            })()}
           </div>
         </div>
 
@@ -601,8 +822,12 @@ function App() {
        <footer className="footer">
         <p>
           Built by <a href="https://kartikeykumar.com" target="_blank" rel="noopener noreferrer">Kartikey Kumar</a> · 
-          <a href="https://github.com/kartikeykumar09" target="_blank" rel="noopener noreferrer" style={{marginLeft: '0.3rem'}}>GitHub</a>
+          More tools at <a href="https://kartikeykumar.com/tools" target="_blank" rel="noopener noreferrer">kartikeykumar.com/tools</a>
         </p>
+        <a href="https://github.com/kartikeykumar09/doc-maintainer" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          View Source Code
+        </a>
       </footer>
     </div>
   );
