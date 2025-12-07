@@ -17,8 +17,6 @@ import {
   AlertCircle,
   Copy,
   Check,
-  Copy,
-  Check,
   ChevronDown,
   Download
 } from 'lucide-react';
