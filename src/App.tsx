@@ -170,6 +170,15 @@ function App() {
     setSelectedPaths(next);
   };
 
+  const toggleSelectAll = () => {
+    if (fileTree.length === 0) return;
+    if (selectedPaths.size === fileTree.length) {
+      setSelectedPaths(new Set());
+    } else {
+      setSelectedPaths(new Set(fileTree.map(n => n.path)));
+    }
+  };
+
   const handleGenerate = async () => {
     if (!repoDetails) return;
     if (selectedPaths.size === 0) {
@@ -277,7 +286,15 @@ function App() {
         {/* Left: File Explorer */}
         <div className={`panel file-explorer ${!repoDetails ? 'disabled' : ''}`}>
           <div className="panel-header">
-            <div className="panel-title">
+            <div className="panel-title" style={{gap: '0.75rem'}}>
+               <div 
+                  className={`checkbox ${selectedPaths.size === fileTree.length && fileTree.length > 0 ? 'checked' : ''}`}
+                  onClick={toggleSelectAll}
+                  style={{cursor: 'pointer'}}
+                  title="Select All"
+                >
+                   {selectedPaths.size === fileTree.length && fileTree.length > 0 && <Check size={12} />}
+                </div>
               <FileCode size={18} className="text-secondary" />
               <span>Project Files</span>
             </div>
