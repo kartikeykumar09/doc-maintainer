@@ -8,10 +8,10 @@ export interface AIModel {
 }
 
 export const availableModels: AIModel[] = [
-    { id: 'gemini-1.5-flash-latest', name: 'Gemini 1.5 Flash (Latest)', provider: 'gemini' },
-    { id: 'gemini-1.5-flash-001', name: 'Gemini 1.5 Flash (Stable)', provider: 'gemini' },
-    { id: 'gemini-1.5-pro-latest', name: 'Gemini 1.5 Pro (Latest)', provider: 'gemini' },
-    { id: 'gemini-1.5-pro-001', name: 'Gemini 1.5 Pro (Stable)', provider: 'gemini' },
+    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash', provider: 'gemini' },
+    { id: 'gemini-1.5-flash-001', name: 'Gemini 1.5 Flash (001)', provider: 'gemini' },
+    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'gemini' },
+    { id: 'gemini-1.5-pro-001', name: 'Gemini 1.5 Pro (001)', provider: 'gemini' },
     { id: 'gemini-pro', name: 'Gemini Pro 1.0', provider: 'gemini' },
     { id: 'gpt-4o', name: 'GPT-4o', provider: 'openai' },
     { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', provider: 'openai' },
@@ -20,7 +20,7 @@ export const availableModels: AIModel[] = [
 
 export const defaultModels: Record<AIProvider, AIModel> = {
     openai: availableModels.find(m => m.id === 'gpt-4o')!,
-    gemini: availableModels.find(m => m.id === 'gemini-1.5-flash-latest')!
+    gemini: availableModels.find(m => m.id === 'gemini-1.5-flash')!
 };
 
 // API Key Management

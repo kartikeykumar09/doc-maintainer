@@ -295,7 +295,7 @@ function App() {
                   onClick={() => setShowModelDropdown(!showModelDropdown)}
                 >
                    <span style={{maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
-                      {selectedModel.name.replace(' (Latest)', '').replace(' (Stable)', '')}
+                      {selectedModel.name.replace(/ \((Latest|Stable|001)\)/g, '')}
                    </span>
                    <ChevronDown size={14} />
                 </button>
