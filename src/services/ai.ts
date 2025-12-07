@@ -7,9 +7,18 @@ export interface AIModel {
     provider: AIProvider;
 }
 
+export const availableModels: AIModel[] = [
+    { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash (Fast & Free Tier Friendly)', provider: 'gemini' },
+    { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'gemini' },
+    { id: 'gemini-pro', name: 'Gemini Pro (Legacy)', provider: 'gemini' },
+    { id: 'gpt-4o', name: 'GPT-4o', provider: 'openai' },
+    { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', provider: 'openai' },
+    { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'openai' }
+];
+
 export const defaultModels: Record<AIProvider, AIModel> = {
-    openai: { id: 'gpt-4o', name: 'GPT-4o', provider: 'openai' },
-    gemini: { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'gemini' }
+    openai: availableModels.find(m => m.id === 'gpt-4o')!,
+    gemini: availableModels.find(m => m.id === 'gemini-1.5-flash')!
 };
 
 // API Key Management
@@ -171,7 +180,7 @@ async function generateGemini(apiKey: string, modelId: string, system: string, u
 
     if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error?.message || 'Failed to generate docs with Gemini');
+        throw new Error(error.error?.message || error.message || 'Failed to generate docs with Gemini');
     }
 
     const data = await response.json();

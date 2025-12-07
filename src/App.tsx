@@ -24,7 +24,8 @@ import {
   getApiKey, 
   getSelectedModel, 
   saveSelectedModel, 
-  defaultModels
+  defaultModels,
+  availableModels
 } from './services/ai';
 import type { AIModel, AIProvider } from './services/ai';
 import { 
@@ -372,6 +373,26 @@ function App() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              <div className="form-group">
+                <label>Model</label>
+                <select 
+                  value={selectedModel.id} 
+                  onChange={(e) => {
+                    const m = availableModels.find(x => x.id === e.target.value);
+                    if(m) setSelectedModel(m);
+                  }}
+                  style={{
+                    width: '100%', padding: '0.75rem', background: 'var(--background)',
+                    border: '1px solid var(--border)', borderRadius: '0.5rem',
+                    color: 'var(--text)', fontFamily: 'Inter, sans-serif'
+                  }}
+                >
+                  {availableModels.filter(m => m.provider === provider).map(m => (
+                    <option key={m.id} value={m.id}>{m.name}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="form-group">
