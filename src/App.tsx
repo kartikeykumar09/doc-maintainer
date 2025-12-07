@@ -50,7 +50,7 @@ function App() {
   const [isLoadingRepo, setIsLoadingRepo] = useState(false);
   
   // Generation
-  const [docContent, setDocContent] = useState('');
+  const [docContent, setDocContent] = useState<Record<string, string> | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeTab, setActiveTab] = useState<'readme' | 'api' | 'examples' | 'update'>('readme');
   
@@ -211,11 +211,16 @@ function App() {
       // 2. Send to AI
       const result = await generateDocs({
         code: combinedCode,
-        type: activeTab as any,
+        type: 'all',
         additionalContext: context
       });
 
-      setDocContent(result);
+      if (typeof result === 'string') {
+          // Fallback
+          setDocContent({ readme: result, api: result, examples: result, update: result });
+      } else {
+          setDocContent(result);
+      }
 
     } catch (err: any) {
       console.error(err);
@@ -401,7 +406,8 @@ function App() {
               </button>
               {docContent && (
                 <button className="btn btn-secondary btn-icon" onClick={() => {
-                   navigator.clipboard.writeText(docContent);
+                   const content = docContent[activeTab] || '';
+                   navigator.clipboard.writeText(content);
                    setCopied(true);
                    setTimeout(() => setCopied(false), 2000);
                 }}>
@@ -434,8 +440,8 @@ function App() {
                  }
                }}
              >
-               {docContent}
-             </ReactMarkdown>
+                {docContent[activeTab] || ''}
+              </ReactMarkdown>
             ) : (
               <div className="placeholder-content">
                 <MapPin size={48} style={{opacity: 0.2, marginBottom: '1rem'}} />

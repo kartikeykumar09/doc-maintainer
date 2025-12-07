@@ -53,9 +53,10 @@ export const saveSelectedModel = (model: AIModel): void => {
 };
 
 // Generation Service
+// Generation Service
 interface GenerateOptions {
     code: string;
-    type: 'readme' | 'api' | 'examples' | 'update';
+    type: 'readme' | 'api' | 'examples' | 'update' | 'all';
     existingDocs?: string; // For update mode
     additionalContext?: string;
 }
@@ -130,10 +131,28 @@ Your task is to update existing documentation to match new code changes.
 1.  **Compare**: Check the New Code against the Old Docs.
 2.  **Update**: Modify signatures, add new parameters, remove deleted features.
 3.  **Preserve**: Keep the existing structure/intro if it's still valid.
-4.  **Output**: Return the FULL updated markdown file.`
+4.  **Output**: Return the FULL updated markdown file.`,
+
+    all: `You are a comprehensive documentation generator.
+Your task is to analyze the source code and generate FOUR documents in a single JSON response.
+
+**Output Format**:
+Return a valid JSON object with these exact keys:
+- "readme": Project Overview (Markdown)
+- "api": Detailed Strict API Reference (Markdown)
+- "examples": Usage Examples (Markdown)
+- "update": Update Notes (Markdown)
+
+**Instructions**:
+- **readme**: Professional, emojis, structure.
+- **api**: Strict tables, signatures, cURL examples as per standard API docs.
+- **examples**: Practical code snippets.
+- **update**: Brief summary of what is documented.
+
+**IMPORTANT**: Return ONLY raw JSON. Do not wrap in markdown code blocks.`
 };
 
-export const generateDocs = async (options: GenerateOptions): Promise<string> => {
+export const generateDocs = async (options: GenerateOptions): Promise<string | any> => {
     const model = getSelectedModel();
     const apiKey = getApiKey(model.provider);
 
@@ -152,11 +171,25 @@ export const generateDocs = async (options: GenerateOptions): Promise<string> =>
         userPrompt += `\n\nAdditional Context/Instructions:\n${options.additionalContext}`;
     }
 
+    let result = '';
     if (model.provider === 'openai') {
-        return generateOpenAI(apiKey, model.id, systemPrompt, userPrompt);
+        result = await generateOpenAI(apiKey, model.id, systemPrompt, userPrompt);
     } else {
-        return generateGemini(apiKey, model.id, systemPrompt, userPrompt);
+        result = await generateGemini(apiKey, model.id, systemPrompt, userPrompt);
     }
+
+    if (options.type === 'all') {
+        try {
+            // Clean up code blocks if present
+            const clean = result.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+            return JSON.parse(clean);
+        } catch (e) {
+            console.error('Failed to parse JSON docs', e);
+            return { readme: result, api: result, examples: result, update: result }; // Fallback
+        }
+    }
+
+    return result;
 };
 
 // Provider Implementations
