@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 // @ts-ignore
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -482,11 +482,11 @@ function App() {
                 });
               };
               
-              const renderFolder = (folderPath: string, depth: number = 0): JSX.Element[] => {
+              const renderFolder = (folderPath: string, depth: number = 0): React.ReactNode[] => {
                 const data = tree[folderPath];
                 if (!data) return [];
                 
-                const items: JSX.Element[] = [];
+                const items: React.ReactNode[] = [];
                 
                 // Helper to get all files under a folder recursively
                 const getAllFilesInFolder = (folder: string): string[] => {
