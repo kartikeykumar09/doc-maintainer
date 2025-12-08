@@ -45,21 +45,26 @@ import type { FileNode } from './services/github';
 import './index.css';
 
 // Render Mermaid diagrams via mermaid.ink (image-based, no caching issues)
-const MermaidDiagram = ({ chart }: { chart: string }) => {
+const MermaidDiagram = ({ chart, onSave }: { chart: string; onSave?: (oldChart: string, newChart: string) => void }) => {
   const [copied, setCopied] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedChart, setEditedChart] = useState(chart);
   const [imageError, setImageError] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [hasSavedEdits, setHasSavedEdits] = useState(false);
   
   const handleCopy = () => {
-    navigator.clipboard.writeText(isEditing ? editedChart : chart);
+    // Always copy the current displayed chart (edited if saved, otherwise original)
+    const chartToCopy = hasSavedEdits ? editedChart : (isEditing ? editedChart : chart);
+    navigator.clipboard.writeText(chartToCopy);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const currentChart = isEditing ? editedChart : chart;
+  // Show edited chart if editing or if edits have been saved
+  const currentChart = (isEditing || hasSavedEdits) ? editedChart : chart;
   
   // Encode for mermaid.ink (simple base64 of the chart code)
   const encodeForMermaidInk = (code: string) => {
@@ -153,32 +158,89 @@ const MermaidDiagram = ({ chart }: { chart: string }) => {
             >
               {showCode ? 'Hide Code' : 'Show Code'}
             </button>
-            <button
-              onClick={() => {
-                if (!isEditing) {
+            {!isEditing ? (
+              <button
+                onClick={() => {
                   setEditedChart(chart);
-                }
-                setIsEditing(!isEditing);
-              }}
-              style={{
-                background: isEditing ? 'var(--warning)' : 'var(--surface)',
-                color: isEditing ? '#000' : 'var(--text-muted)',
-                border: '1px solid var(--border)',
-                padding: '0.25rem 0.5rem',
-                borderRadius: '0.25rem',
-                fontSize: '0.7rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.25rem'
-              }}
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-              </svg>
-              {isEditing ? 'Done' : 'Edit'}
-            </button>
+                  setIsEditing(true);
+                  setSaved(false);
+                }}
+                style={{
+                  background: 'var(--surface)',
+                  color: 'var(--text-muted)',
+                  border: '1px solid var(--border)',
+                  padding: '0.25rem 0.5rem',
+                  borderRadius: '0.25rem',
+                  fontSize: '0.7rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.25rem'
+                }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                Edit
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={() => {
+                    if (editedChart !== chart) {
+                      if (onSave) {
+                        onSave(chart, editedChart);
+                      }
+                      setHasSavedEdits(true);
+                      setSaved(true);
+                      setTimeout(() => setSaved(false), 2000);
+                    }
+                    setIsEditing(false);
+                  }}
+                  style={{
+                    background: saved ? 'var(--success)' : 'var(--primary)',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '0.25rem 0.5rem',
+                    borderRadius: '0.25rem',
+                    fontSize: '0.7rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem'
+                  }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                  </svg>
+                  {saved ? '✓ Saved' : 'Save'}
+                </button>
+                <button
+                  onClick={() => {
+                    // When canceling, restore to the previously saved state (if any) or original
+                    if (!hasSavedEdits) {
+                      setEditedChart(chart);
+                    }
+                    // If hasSavedEdits is true, editedChart already has the saved version
+                    setIsEditing(false);
+                  }}
+                  style={{
+                    background: 'transparent',
+                    color: 'var(--text-muted)',
+                    border: '1px solid var(--border)',
+                    padding: '0.25rem 0.5rem',
+                    borderRadius: '0.25rem',
+                    fontSize: '0.7rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+              </>
+            )}
             <button
               onClick={handleCopy}
               style={{
@@ -965,7 +1027,24 @@ function App() {
                  code({node, inline, className, children, ...props}: any) {
                    const match = /language-(\w+)/.exec(className || '');
                    if (!inline && match && match[1] === 'mermaid') {
-                     return <MermaidDiagram chart={String(children)} />;
+                     const chartCode = String(children);
+                     return (
+                       <MermaidDiagram 
+                         chart={chartCode} 
+                         onSave={(oldChart, newChart) => {
+                           // Replace the old mermaid code with the new one in the current tab's content
+                           const currentContent = docContent[activeTab] || '';
+                           const updatedContent = currentContent.replace(
+                             '```mermaid\n' + oldChart + '\n```',
+                             '```mermaid\n' + newChart + '\n```'
+                           );
+                           setDocContent({
+                             ...docContent,
+                             [activeTab]: updatedContent
+                           });
+                         }}
+                       />
+                     );
                    }
                    return !inline && match ? (
                      <SyntaxHighlighter
@@ -1079,8 +1158,8 @@ function App() {
       
        <footer className="footer">
         <p>
-          Built by <a href="https://kartikeykumar.com" target="_blank" rel="noopener noreferrer">Kartikey Kumar</a> · 
-          More tools at <a href="https://kartikeykumar.com/tools" target="_blank" rel="noopener noreferrer">kartikeykumar.com/tools</a>
+          Built by <a href="https://kartikeykumar.in" target="_blank" rel="noopener noreferrer">Kartikey Kumar</a> · 
+          More tools at <a href="https://kartikeykumar.in/tools" target="_blank" rel="noopener noreferrer">kartikeykumar.in/tools</a>
         </p>
         <a href="https://github.com/kartikeykumar09/doc-maintainer" target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem', color: 'var(--text-muted)', textDecoration: 'none', fontSize: '0.9rem' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>

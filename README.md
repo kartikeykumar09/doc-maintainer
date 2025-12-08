@@ -2,7 +2,7 @@
 
 > Auto-generate and maintain documentation directly from your GitHub repositories.
 
-[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://kartikeykumar.com/tools/doc-maintainer/)
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://kartikeykumar.in/tools/doc-maintainer/)
 [![React](https://img.shields.io/badge/React-18-blue)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://typescriptlang.org)
 [![Vite](https://img.shields.io/badge/Vite-5-purple)](https://vitejs.dev)
@@ -76,9 +76,9 @@ MIT License - build something awesome!
 
 ## 🙏 Acknowledgments
 
-- Built by [Kartikey Kumar](https://kartikeykumar.com)
-- Part of the [Free Developer Tools](https://kartikeykumar.com/tools) suite
+- Built by [Kartikey Kumar](https://kartikeykumar.in)
+- Part of the [Free Developer Tools](https://kartikeykumar.in/tools) suite
 
 ---
 
-**[🔗 Live Demo](https://kartikeykumar.com/tools/doc-maintainer/)** | **[🐛 Report Bug](https://github.com/kartikeykumar09/doc-maintainer/issues)**
+**[🔗 Live Demo](https://kartikeykumar.in/tools/doc-maintainer/)** | **[🐛 Report Bug](https://github.com/kartikeykumar09/doc-maintainer/issues)**
