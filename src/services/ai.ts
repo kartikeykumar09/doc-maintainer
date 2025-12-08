@@ -56,7 +56,7 @@ export const saveSelectedModel = (model: AIModel): void => {
 // Generation Service
 interface GenerateOptions {
     code: string;
-    type: 'readme' | 'api' | 'examples' | 'architecture' | 'update' | 'all';
+    type: 'readme' | 'api' | 'examples' | 'architecture' | 'update' | 'all' | 'hld' | 'lld' | 'technical-analysis';
     existingDocs?: string; // For update mode
     additionalContext?: string;
 }
@@ -134,39 +134,67 @@ Your task is to update existing documentation to match new code changes.
 4.  **Output**: Return the FULL updated markdown file.`,
 
     all: `You are a comprehensive documentation generator.
-Your task is to analyze the source code and generate FOUR documents in a single JSON response.
+Your task is to analyze the source code and generate EIGHT documents in a single JSON response.
 
 **Output Format**:
 Return a valid JSON object with these exact keys:
 - "readme": Project Overview (Markdown)
-- "architecture": System Architecture with Mermaid.js diagrams (flowcharts, sequence diagrams)
+- "api": API Reference (Markdown)
+- "examples": Usage Examples (Markdown)
+- "architecture": System Architecture with Mermaid diagrams
 - "update": Update Notes (Markdown)
+- "hld": High-Level Design Document
+- "lld": Low-Level Design Document
+- "technical-analysis": Technical Analysis Report
 
-**Instructions**:
-- **readme**: Professional, emojis, structure.
-- **api**: Strict tables, signatures, cURL examples.
-- **examples**: Practical code snippets.
-- **architecture**: Use Mermaid.js (\`\`\`mermaid) for flowcharts. FOLLOW STRICT SYNTAX BELOW.
-- **update**: Brief summary of documentation.
+**Document Guidelines**:
+- **readme**: Professional project overview with features, setup, usage
+- **api**: Function/endpoint documentation with parameters and returns
+- **examples**: Practical code examples
+- **architecture**: Component diagrams with Mermaid flowcharts
+- **update**: Brief changelog/update summary
+- **hld**: Executive-level system overview, context diagrams, integration points
+- **lld**: Detailed module breakdown, class diagrams, sequence flows
+- **technical-analysis**: Code quality, security, performance, SWOT analysis
 
-**CRITICAL MERMAID SYNTAX RULES FOR ARCHITECTURE**:
+**CRITICAL MERMAID SYNTAX RULES**:
 1. Node labels: Use square brackets \`A[Label]\` or curly braces \`B{Decision}\`
 2. NEVER use parentheses () inside ANY label text - they break the parser!
 3. Edge labels: Use \`|label|\` syntax, NOT \`-- label --\` syntax
-   - BAD: \`A -- Quick Mode --> B\` ❌
-   - GOOD: \`A -->|Quick Mode| B\` ✓
-4. Special characters to AVOID in labels: ( ) " ' & < >
-5. Replace parentheses with dashes or slashes: \`(LLM)\` → \`- LLM\` or \`/LLM\`
+4. Special characters to AVOID: ( ) " ' & < > / - |
+5. Keep labels SHORT - under 15 characters!
 
-**Correct flowchart example**:
+**FORBIDDEN DIAGRAM TYPES - DO NOT USE**:
+- NO \`c4context\`, \`c4container\`, \`c4component\` - C4 diagrams are NOT supported!
+- NO \`person\`, \`system\`, \`externalSystem\` keywords
+- NO \`actor\` or \`database\` keywords in sequence diagrams
+- ONLY use: \`graph\`, \`flowchart\`, \`sequenceDiagram\`, \`classDiagram\`
+
+**SEQUENCE DIAGRAM RULES**:
+- Use ONLY \`participant\` keyword
+- Keep participant aliases SHORT: \`participant U as User\`
+- Use simple arrow syntax: \`U->>A: message\`
+
+**Correct flowchart example** (use this instead of C4):
 \`\`\`mermaid
-graph TD
-    A[User Interface] -->|Select Mode| B{Choose Path}
-    B -->|Quick| C[Static Wizard]
-    B -->|AI Chat| D[Chat Interface]
-    C --> E[Calculate Results]
-    D --> F[API Service Layer]
-    F -->|Call LLM| G[Parse Response]
+graph LR
+    U[Users] --> App[Application]
+    App --> Auth[Auth Service]
+    App --> DB[(Database)]
+    App --> Storage[File Storage]
+    App --> Email[Email Service]
+\`\`\`
+
+**Correct sequence example**:
+\`\`\`mermaid
+sequenceDiagram
+    participant U as User
+    participant A as API
+    participant D as DB
+    U->>A: Request
+    A->>D: Query
+    D-->>A: Data
+    A-->>U: Response
 \`\`\`
 
 **IMPORTANT**: Return ONLY raw JSON. Do not wrap in markdown code blocks.`,
@@ -213,7 +241,7 @@ Your task is to analyze the source code and generate an **Architecture & Interna
    - Split long labels into multiple lines using \`<br/>\` ONLY if needed
    - Prefer simple flat diagrams over nested structures
 
-6. **Correct Example**:
+6. **Correct Flowchart Example**:
 \`\`\`mermaid
 graph TD
     A[UI - React] -->|Select| B{Mode}
@@ -229,7 +257,167 @@ graph TD
     K --> D
 \`\`\`
 
-**Tone**: Technical and structural.`
+7. **SEQUENCE DIAGRAM RULES - CRITICAL**:
+   - Use ONLY \`participant\` keyword - NOT \`actor\` or \`database\`
+   - Keep participant names SHORT: max 10 chars
+   - Use short aliases: \`participant U as User\`
+   - Avoid special characters like / - in names
+
+**Correct Sequence Example**:
+\`\`\`mermaid
+sequenceDiagram
+    participant U as User
+    participant A as API
+    participant D as DB
+    U->>A: Request
+    A->>D: Query
+    D-->>A: Data
+    A-->>U: Response
+\`\`\`
+
+**Tone**: Technical and structural.`,
+
+    hld: `You are a senior solutions architect.
+Your task is to analyze the source code and generate a **High-Level Design (HLD) Document**.
+
+**Required Sections:**
+1. **Executive Summary**: Brief overview of the system purpose and scope.
+2. **System Context Diagram**: Mermaid diagram showing the system and its external interactions (users, third-party services, databases).
+3. **Architecture Overview**: High-level description of the architecture pattern (MVC, microservices, etc.).
+4. **Component Overview**: List major components/modules with one-line descriptions.
+5. **Technology Stack**: Technologies used and why they were chosen.
+6. **Data Flow Overview**: How data moves through the system at a high level.
+7. **Integration Points**: External APIs, services, and dependencies.
+8. **Security Considerations**: Authentication, authorization, data protection at high level.
+9. **Scalability Considerations**: How the system can scale.
+
+**Mermaid Diagram Requirements:**
+- Use simple flowcharts with \`graph TD\` or \`graph LR\` ONLY
+- **DO NOT USE C4 diagrams** (c4context, c4container, etc.) - they are NOT supported!
+- **DO NOT USE** person, system, externalSystem keywords
+- Keep labels short (under 15 characters)
+- Use abbreviations: UI, API, DB, Auth, etc.
+- NO subgraphs - they cause overlap issues
+- For sequences: Use ONLY \`participant\` - NOT \`actor\` or \`database\`
+- Avoid special characters in names: no ( ) / - " '
+
+**Example HLD Diagram:**
+\`\`\`mermaid
+graph LR
+    U[Users] --> FE[Frontend]
+    FE --> API[API Gateway]
+    API --> Auth[Auth Service]
+    API --> Core[Core Service]
+    Core --> DB[(Database)]
+    Core --> Cache[(Redis)]
+    Core --> Queue[Message Queue]
+\`\`\`
+
+**Tone**: Executive-level, strategic, focused on the big picture.`,
+
+    lld: `You are a senior software engineer.
+Your task is to analyze the source code and generate a **Low-Level Design (LLD) Document**.
+
+**Required Sections:**
+1. **Module Breakdown**: Detailed description of each module/component.
+2. **Class/Function Diagrams**: Mermaid class diagrams or detailed flowcharts.
+3. **Data Models**: Schema definitions, interfaces, types.
+4. **API Contracts**: Detailed endpoint specifications with request/response formats.
+5. **Algorithm Details**: Key algorithms and their complexity analysis.
+6. **State Management**: How state is managed across the application.
+7. **Error Handling**: Error handling patterns and strategies.
+8. **Database Schema**: Tables, relationships, indexes.
+9. **Sequence Diagrams**: Detailed interaction flows for critical operations.
+
+**Mermaid Diagram Requirements for LLD:**
+- For class diagrams use \`classDiagram\`
+- For sequences use \`sequenceDiagram\`
+- Keep all labels short (under 15 chars)
+- Use abbreviations where possible
+- **CRITICAL**: Use ONLY \`participant\` keyword - NOT \`actor\` or \`database\`
+- Keep participant aliases SHORT: \`participant U as User\`
+- Avoid special characters in names: no ( ) / - " '
+
+**Example Class Diagram:**
+\`\`\`mermaid
+classDiagram
+    class UserService {
+        +getUser(id)
+        +createUser(data)
+        -validateEmail()
+    }
+    class AuthService {
+        +login(creds)
+        +logout()
+        +refreshToken()
+    }
+    UserService --> AuthService
+\`\`\`
+
+**Example Sequence Diagram:**
+\`\`\`mermaid
+sequenceDiagram
+    participant U as User
+    participant A as API
+    participant D as DB
+    U->>A: POST /login
+    A->>D: Query user
+    D-->>A: User data
+    A-->>U: JWT token
+\`\`\`
+
+**Tone**: Detailed, implementation-focused, developer-oriented.`,
+
+    'technical-analysis': `You are a senior technical analyst and code reviewer.
+Your task is to analyze the source code and generate a comprehensive **Technical Analysis Report**.
+
+**Required Sections:**
+1. **Code Quality Assessment**:
+   - Code structure and organization
+   - Naming conventions
+   - Code complexity metrics (estimated)
+   - Adherence to best practices
+
+2. **Architecture Analysis**:
+   - Design patterns identified
+   - SOLID principles adherence
+   - Separation of concerns
+   - Coupling and cohesion analysis
+
+3. **Performance Considerations**:
+   - Potential bottlenecks
+   - Memory usage patterns
+   - Async/concurrent operations
+   - Database query efficiency
+
+4. **Security Analysis**:
+   - Input validation
+   - Authentication/Authorization implementation
+   - Data sanitization
+   - Potential vulnerabilities (OWASP Top 10)
+
+5. **Maintainability Score**:
+   - Code documentation coverage
+   - Test coverage indicators
+   - Dependency management
+   - Technical debt indicators
+
+6. **Recommendations**:
+   - Critical issues to address
+   - Suggested improvements
+   - Refactoring opportunities
+   - Performance optimizations
+
+7. **SWOT Analysis**:
+   - Strengths of the codebase
+   - Weaknesses to address
+   - Opportunities for improvement
+   - Threats/Risks
+
+**Output Format**: Use markdown with clear headers, bullet points, and code examples where relevant.
+Include a summary rating (1-10) for each major category.
+
+**Tone**: Objective, analytical, constructive. Focus on actionable insights.`
 };
 
 export const generateDocs = async (options: GenerateOptions): Promise<string | any> => {

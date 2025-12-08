@@ -422,7 +422,7 @@ function App() {
   // Generation
   const [docContent, setDocContent] = useState<Record<string, string> | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [activeTab, setActiveTab] = useState<'readme' | 'api' | 'examples' | 'architecture' | 'update'>('readme');
+  const [activeTab, setActiveTab] = useState<'readme' | 'api' | 'examples' | 'architecture' | 'update' | 'hld' | 'lld' | 'technical-analysis'>('readme');
   
   // UI & Settings
   const [showSettings, setShowSettings] = useState(false);
@@ -846,6 +846,24 @@ function App() {
                 onClick={() => setActiveTab('architecture')}
               >
                 Architecture
+              </button>
+              <button 
+                className={`tab-btn ${activeTab === 'hld' ? 'active' : ''}`}
+                onClick={() => setActiveTab('hld')}
+              >
+                HLD
+              </button>
+              <button 
+                className={`tab-btn ${activeTab === 'lld' ? 'active' : ''}`}
+                onClick={() => setActiveTab('lld')}
+              >
+                LLD
+              </button>
+              <button 
+                className={`tab-btn ${activeTab === 'technical-analysis' ? 'active' : ''}`}
+                onClick={() => setActiveTab('technical-analysis')}
+              >
+                Tech Analysis
               </button>
             </div>
             
