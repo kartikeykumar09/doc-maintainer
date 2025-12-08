@@ -146,8 +146,28 @@ Return a valid JSON object with these exact keys:
 - **readme**: Professional, emojis, structure.
 - **api**: Strict tables, signatures, cURL examples.
 - **examples**: Practical code snippets.
-- **architecture**: Use Mermaid.js (\`\`\`mermaid) for flowcharts and sequence diagrams.
+- **architecture**: Use Mermaid.js (\`\`\`mermaid) for flowcharts. FOLLOW STRICT SYNTAX BELOW.
 - **update**: Brief summary of documentation.
+
+**CRITICAL MERMAID SYNTAX RULES FOR ARCHITECTURE**:
+1. Node labels: Use square brackets \`A[Label]\` or curly braces \`B{Decision}\`
+2. NEVER use parentheses () inside ANY label text - they break the parser!
+3. Edge labels: Use \`|label|\` syntax, NOT \`-- label --\` syntax
+   - BAD: \`A -- Quick Mode --> B\` ❌
+   - GOOD: \`A -->|Quick Mode| B\` ✓
+4. Special characters to AVOID in labels: ( ) " ' & < >
+5. Replace parentheses with dashes or slashes: \`(LLM)\` → \`- LLM\` or \`/LLM\`
+
+**Correct flowchart example**:
+\`\`\`mermaid
+graph TD
+    A[User Interface] -->|Select Mode| B{Choose Path}
+    B -->|Quick| C[Static Wizard]
+    B -->|AI Chat| D[Chat Interface]
+    C --> E[Calculate Results]
+    D --> F[API Service Layer]
+    F -->|Call LLM| G[Parse Response]
+\`\`\`
 
 **IMPORTANT**: Return ONLY raw JSON. Do not wrap in markdown code blocks.`,
 
@@ -158,18 +178,56 @@ Your task is to analyze the source code and generate an **Architecture & Interna
 1.  **High-Level Design**: Explain how the components interact.
 2.  **Data Flow**: How data moves from input to output.
 3.  **Mermaid Diagrams**: Use \`\`\`mermaid code blocks for flowcharts.
-    
-    **CRITICAL MERMAID SYNTAX RULES**:
-    - Use square brackets for nodes: \`A[Label]\` 
-    - NEVER use parentheses () inside labels - they break the parser!
-    - BAD: \`A[Decoder (LLM)]\` ❌
-    - GOOD: \`A[Decoder - LLM]\` ✓
-    - GOOD: \`A[Decoder/LLM]\` ✓
-    - For round nodes, use: \`A((Label))\` but NO parentheses in the label text itself
-    - Replace any \`(...)\` in descriptions with \`- ...\` or \`/ ...\` or just remove them
-    
 4.  **Directory Structure**: Annotated explanation of key files.
 5.  **Tech Decisions**: Why specific libraries/patterns were chosen.
+
+**CRITICAL MERMAID SYNTAX RULES - MUST FOLLOW EXACTLY**:
+
+1. **Node Syntax**:
+   - Rectangle: \`A[Label Text]\`
+   - Diamond/Decision: \`B{Question}\`
+   - Round: \`C((Label))\`
+   
+2. **FORBIDDEN Characters Inside Labels**:
+   - NEVER use parentheses \`()\` inside label text - they BREAK the parser!
+   - NEVER use quotes \`" '\` inside labels
+   - NEVER use ampersand \`&\` - use "and" instead
+   - NEVER use angle brackets \`< >\`
+   
+3. **Edge Labels - Use Pipe Syntax ONLY**:
+   - BAD: \`A -- Some Label --> B\` ❌ (BREAKS PARSER)
+   - BAD: \`A --Some Label--> B\` ❌ (BREAKS PARSER)  
+   - GOOD: \`A -->|Some Label| B\` ✓
+   - GOOD: \`A --> B\` ✓ (no label)
+   
+4. **Replacement Rules**:
+   - \`(LLM)\` → \`- LLM\` or \`/LLM\`
+   - \`"text"\` → \`text\`
+   - \`A & B\` → \`A and B\`
+
+5. **PREVENT TEXT OVERLAP - CRITICAL**:
+   - Keep ALL labels SHORT: maximum 20 characters
+   - Use abbreviations: "User Interface" → "UI", "Application" → "App"
+   - AVOID subgraph blocks - they cause overlap issues
+   - For sequence diagrams, use short participant aliases: \`participant U as User\`
+   - Split long labels into multiple lines using \`<br/>\` ONLY if needed
+   - Prefer simple flat diagrams over nested structures
+
+6. **Correct Example**:
+\`\`\`mermaid
+graph TD
+    A[UI - React] -->|Select| B{Mode}
+    B -->|Quick| C[Static Flow]
+    B -->|AI Chat| D[Chat UI]
+    C --> E{Answers}
+    E --> F[Calc Results]
+    F --> G[Display]
+    D --> H{Input}
+    H --> I[API Layer]
+    I -->|LLM Call| J[Parse JSON]
+    J --> K[Render]
+    K --> D
+\`\`\`
 
 **Tone**: Technical and structural.`
 };

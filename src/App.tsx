@@ -44,131 +44,371 @@ import {
 import type { FileNode } from './services/github';
 import './index.css';
 
-// Render Mermaid diagrams via mermaid.live iframe (most reliable method)
+// Render Mermaid diagrams via mermaid.ink (image-based, no caching issues)
 const MermaidDiagram = ({ chart }: { chart: string }) => {
   const [copied, setCopied] = useState(false);
   const [showCode, setShowCode] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedChart, setEditedChart] = useState(chart);
+  const [imageError, setImageError] = useState(false);
   
   const handleCopy = () => {
-    navigator.clipboard.writeText(chart);
+    navigator.clipboard.writeText(isEditing ? editedChart : chart);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Encode diagram for mermaid.live URL using pako compression
-  // For view mode: https://mermaid.live/view#pako:...
-  const encodeDiagram = (code: string) => {
+  const currentChart = isEditing ? editedChart : chart;
+  
+  // Encode for mermaid.ink (simple base64 of the chart code)
+  const encodeForMermaidInk = (code: string) => {
     try {
-      // Simple base64 for the state object
-      const state = { code, mermaid: { theme: 'dark' }, autoSync: true, updateDiagram: true };
-      return btoa(JSON.stringify(state));
+      return btoa(unescape(encodeURIComponent(code)));
     } catch {
       return btoa(code);
     }
   };
 
-  const encodedState = encodeDiagram(chart);
-  const viewUrl = `https://mermaid.live/view#base64:${encodedState}`;
+
+  // Use SVG format for better quality rendering
+  const mermaidInkUrl = `https://mermaid.ink/svg/${encodeForMermaidInk(currentChart)}?bgColor=1e1e1e&theme=dark`;
+  const mermaidPngUrl = `https://mermaid.ink/img/${encodeForMermaidInk(currentChart)}?bgColor=1e1e1e&theme=dark`;
+
+  // Download diagram as PNG
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(mermaidPngUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'mermaid-diagram.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to download diagram:', error);
+    }
+  };
+
 
   return (
-    <div style={{
-      margin: '1rem 0',
-      background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1))',
-      border: '1px solid rgba(99,102,241,0.3)',
-      borderRadius: '0.5rem',
-      overflow: 'hidden'
-    }}>
+    <>
       <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '0.5rem 1rem',
-        background: 'rgba(0,0,0,0.2)',
-        borderBottom: '1px solid rgba(99,102,241,0.2)'
+        margin: '1rem 0',
+        background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1))',
+        border: '1px solid rgba(99,102,241,0.3)',
+        borderRadius: '0.5rem',
+        overflow: 'hidden'
       }}>
-        <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600 }}>
-          📊 Mermaid Diagram
-        </span>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <button
-            onClick={() => setShowCode(!showCode)}
-            style={{
-              background: 'transparent',
-              color: 'var(--text-muted)',
-              border: '1px solid var(--border)',
-              padding: '0.25rem 0.5rem',
-              borderRadius: '0.25rem',
-              fontSize: '0.7rem',
-              cursor: 'pointer'
-            }}
-          >
-            {showCode ? 'Hide Code' : 'Show Code'}
-          </button>
-          <a
-            href={`https://mermaid.live/edit#base64:${encodedState}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              background: 'var(--surface)',
-              color: 'var(--text-muted)',
-              border: '1px solid var(--border)',
-              padding: '0.25rem 0.5rem',
-              borderRadius: '0.25rem',
-              fontSize: '0.7rem',
-              textDecoration: 'none'
-            }}
-          >
-            Edit ↗
-          </a>
-          <button
-            onClick={handleCopy}
-            style={{
-              background: copied ? 'var(--success)' : 'var(--primary)',
-              color: '#fff',
-              border: 'none',
-              padding: '0.25rem 0.5rem',
-              borderRadius: '0.25rem',
-              fontSize: '0.7rem',
-              cursor: 'pointer'
-            }}
-          >
-            {copied ? '✓ Copied' : 'Copy'}
-          </button>
-        </div>
-      </div>
-      
-      {showCode && (
-        <pre style={{
-          margin: 0,
-          padding: '1rem',
-          overflow: 'auto',
-          maxHeight: '200px',
-          fontSize: '0.7rem',
-          lineHeight: 1.4,
-          color: '#94a3b8',
-          background: 'rgba(0,0,0,0.3)',
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '0.5rem 1rem',
+          background: 'rgba(0,0,0,0.2)',
           borderBottom: '1px solid rgba(99,102,241,0.2)'
         }}>
-          <code>{chart}</code>
-        </pre>
-      )}
-      
-      <div style={{ background: '#1e1e1e', minHeight: '250px' }}>
-        <iframe
-          src={viewUrl}
-          style={{
-            width: '100%',
-            height: '350px',
-            border: 'none',
-            background: '#1e1e1e'
-          }}
-          title="Mermaid Diagram"
-          sandbox="allow-scripts allow-same-origin"
-        />
+          <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600 }}>
+            Diagram {isEditing && <span style={{ color: 'var(--warning)', marginLeft: '0.5rem' }}>(Editing)</span>}
+          </span>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <button
+              onClick={() => setShowModal(true)}
+              style={{
+                background: 'transparent',
+                color: 'var(--text-muted)',
+                border: '1px solid var(--border)',
+                padding: '0.25rem 0.5rem',
+                borderRadius: '0.25rem',
+                fontSize: '0.7rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem'
+              }}
+              title="View Fullscreen"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <polyline points="9 21 3 21 3 15"></polyline>
+                <line x1="21" y1="3" x2="14" y2="10"></line>
+                <line x1="3" y1="21" x2="10" y2="14"></line>
+              </svg>
+              Expand
+            </button>
+            <button
+              onClick={() => setShowCode(!showCode)}
+              style={{
+                background: 'transparent',
+                color: 'var(--text-muted)',
+                border: '1px solid var(--border)',
+                padding: '0.25rem 0.5rem',
+                borderRadius: '0.25rem',
+                fontSize: '0.7rem',
+                cursor: 'pointer'
+              }}
+            >
+              {showCode ? 'Hide Code' : 'Show Code'}
+            </button>
+            <button
+              onClick={() => {
+                if (!isEditing) {
+                  setEditedChart(chart);
+                }
+                setIsEditing(!isEditing);
+              }}
+              style={{
+                background: isEditing ? 'var(--warning)' : 'var(--surface)',
+                color: isEditing ? '#000' : 'var(--text-muted)',
+                border: '1px solid var(--border)',
+                padding: '0.25rem 0.5rem',
+                borderRadius: '0.25rem',
+                fontSize: '0.7rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem'
+              }}
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
+              {isEditing ? 'Done' : 'Edit'}
+            </button>
+            <button
+              onClick={handleCopy}
+              style={{
+                background: copied ? 'var(--success)' : 'var(--primary)',
+                color: '#fff',
+                border: 'none',
+                padding: '0.25rem 0.5rem',
+                borderRadius: '0.25rem',
+                fontSize: '0.7rem',
+                cursor: 'pointer'
+              }}
+            >
+              {copied ? '✓ Copied' : 'Copy'}
+            </button>
+            <button
+              onClick={handleDownload}
+              style={{
+                background: 'var(--surface)',
+                color: 'var(--text-muted)',
+                border: '1px solid var(--border)',
+                padding: '0.25rem 0.5rem',
+                borderRadius: '0.25rem',
+                fontSize: '0.7rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem'
+              }}
+              title="Download Diagram"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Download
+            </button>
+          </div>
+        </div>
+        
+        {/* Inline Code Editor */}
+        {isEditing && (
+          <div style={{ 
+            borderBottom: '1px solid rgba(99,102,241,0.2)',
+            background: 'rgba(0,0,0,0.4)'
+          }}>
+            <textarea
+              value={editedChart}
+              onChange={(e) => setEditedChart(e.target.value)}
+              style={{
+                width: '100%',
+                minHeight: '200px',
+                padding: '1rem',
+                background: 'transparent',
+                border: 'none',
+                color: '#94a3b8',
+                fontFamily: 'monospace',
+                fontSize: '0.8rem',
+                lineHeight: 1.5,
+                resize: 'vertical',
+                outline: 'none'
+              }}
+              placeholder="Edit your Mermaid diagram code here..."
+              spellCheck={false}
+            />
+            <div style={{
+              padding: '0.5rem 1rem',
+              background: 'rgba(0,0,0,0.2)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              fontSize: '0.7rem',
+              color: 'var(--text-muted)'
+            }}>
+              <span>💡 Tip: Changes update the preview in real-time</span>
+              <button
+                onClick={() => setEditedChart(chart)}
+                style={{
+                  background: 'transparent',
+                  color: 'var(--text-muted)',
+                  border: '1px solid var(--border)',
+                  padding: '0.25rem 0.5rem',
+                  borderRadius: '0.25rem',
+                  fontSize: '0.7rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Reset to Original
+              </button>
+            </div>
+          </div>
+        )}
+        
+        {showCode && !isEditing && (
+          <pre style={{
+            margin: 0,
+            padding: '1rem',
+            overflow: 'auto',
+            maxHeight: '200px',
+            fontSize: '0.7rem',
+            lineHeight: 1.4,
+            color: '#94a3b8',
+            background: 'rgba(0,0,0,0.3)',
+            borderBottom: '1px solid rgba(99,102,241,0.2)'
+          }}>
+            <code>{currentChart}</code>
+          </pre>
+        )}
+        
+        <div style={{ 
+          background: '#1e1e1e', 
+          minHeight: '250px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1rem'
+        }}>
+          {imageError ? (
+            <div style={{ 
+              color: 'var(--text-muted)', 
+              textAlign: 'center',
+              padding: '2rem'
+            }}>
+              <p style={{ marginBottom: '0.5rem' }}>⚠️ Unable to render diagram</p>
+              <p style={{ fontSize: '0.75rem' }}>Check the Mermaid syntax in the code</p>
+            </div>
+          ) : (
+            <img
+              src={mermaidInkUrl}
+              alt="Mermaid Diagram"
+              style={{
+                width: '100%',
+                height: 'auto',
+                minHeight: '200px'
+              }}
+              onError={() => setImageError(true)}
+            />
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Fullscreen Modal */}
+      {showModal && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.9)',
+            zIndex: 9999,
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '1rem'
+          }}
+          onClick={() => setShowModal(false)}
+        >
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '1rem'
+          }}>
+            <span style={{ color: 'var(--primary)', fontWeight: 600 }}>
+              Diagram - Fullscreen View
+            </span>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCopy();
+                }}
+                style={{
+                  background: copied ? 'var(--success)' : 'var(--surface)',
+                  color: copied ? '#fff' : 'var(--text-muted)',
+                  border: '1px solid var(--border)',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '0.5rem',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer'
+                }}
+              >
+                {copied ? '✓ Copied' : 'Copy Code'}
+              </button>
+              <button
+                onClick={() => setShowModal(false)}
+                style={{
+                  background: 'var(--surface)',
+                  color: 'var(--text)',
+                  border: '1px solid var(--border)',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '0.5rem',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer'
+                }}
+              >
+                ✕ Close
+              </button>
+            </div>
+          </div>
+          <div 
+            style={{ 
+              flex: 1, 
+              background: '#1e1e1e', 
+              borderRadius: '0.5rem',
+              overflow: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '2rem'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={mermaidInkUrl}
+              alt="Mermaid Diagram Fullscreen"
+              style={{
+                maxWidth: '100%',
+                maxHeight: '100%',
+                objectFit: 'contain'
+              }}
+            />
+          </div>
+        </div>
+      )}
+    </>
   );
 };
+
 
 function App() {
   // --- State ---
