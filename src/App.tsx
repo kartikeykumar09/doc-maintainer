@@ -1150,7 +1150,49 @@ function App() {
                 <p className="help-text">Required for private repos or to increase rate limits.</p>
               </div>
 
+              {/* Security Notice */}
+              <div style={{
+                padding: '0.75rem',
+                background: 'rgba(251, 191, 36, 0.1)',
+                border: '1px solid rgba(251, 191, 36, 0.3)',
+                borderRadius: '0.5rem',
+                marginBottom: '1rem',
+                fontSize: '0.8rem',
+                color: 'var(--text-muted)'
+              }}>
+                <strong style={{ color: '#fbbf24' }}>🔒 Security Notice:</strong>
+                <p style={{ margin: '0.5rem 0 0 0' }}>
+                  API keys are stored locally in your browser (localStorage). 
+                  Use test/development keys with limited permissions. 
+                  Clear data when using shared computers.
+                </p>
+              </div>
+
               <button className="btn btn-primary full-width" onClick={handleSaveSettings}>Save Settings</button>
+              
+              {/* Clear All Data Button */}
+              <button 
+                className="btn full-width" 
+                onClick={() => {
+                  if (confirm('This will clear all saved API keys and settings. Continue?')) {
+                    localStorage.removeItem('doc_maintainer_openai_key');
+                    localStorage.removeItem('doc_maintainer_gemini_key');
+                    localStorage.removeItem('doc_maintainer_model');
+                    localStorage.removeItem('doc_maintainer_github_token');
+                    setApiKeyState('');
+                    setGithubToken('');
+                    alert('All data cleared successfully.');
+                  }
+                }}
+                style={{
+                  marginTop: '0.5rem',
+                  background: 'transparent',
+                  border: '1px solid var(--danger, #ef4444)',
+                  color: 'var(--danger, #ef4444)'
+                }}
+              >
+                🗑️ Clear All Saved Data
+              </button>
             </div>
           </div>
         </div>
